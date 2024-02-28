@@ -1,6 +1,7 @@
 const canvas = document.querySelector('canvas');
 const paddleImg = document.querySelector('#paddle');
 const bricksImg = document.querySelector('#bricks');
+let animationFrame;
 
 const ctx = canvas.getContext('2d');
 
@@ -82,8 +83,8 @@ function drawPaddle() {
         8, // alto del recorte
         paddleX, // ubicacion del dibujo en X en canvas
         paddleY, // ubicacion del dibujo en Y en canvas
-        paddleWidth, // ancho del dibujo
-        paddleHeight // alto del dibujo
+        paddleWidth + 5, // ancho del dibujo
+        paddleHeight + 2 // alto del dibujo
     )
 };
 
@@ -118,6 +119,24 @@ function drawBricks() {
 };
 
 function colisionDetection() {
+    for ( let c = 0; c < brickColumnCount; c++ ){
+        for (let r=0; r<brickRowCount; r++){
+            const currentBrick = bricks[c][r];
+            const { status, color } = currentBrick;
+            if ( status.DESTROYED ) continue;
+            const isBallSameXAsBrick = 
+                x > currentBrick.x && 
+                x < currentBrick.x + brickWidth;
+            const isBallSameYAsBrick =
+                y > currentBrick.y &&
+                y < currentBrick.y + brickHeight;
+
+            if( isBallSameXAsBrick && isBallSameYAsBrick ){
+                currentBrick.status = { ACTIVE: 0, DESTROYED: 1 };
+                dy = -dy;
+            }
+        }
+    }
 };
 
 function ballMovement() {
@@ -135,19 +154,12 @@ function ballMovement() {
 
     // reiniciar juego cuando la pelota toca el suelo
     if( y + dy > canvas.height - ballRadius ){
-        // console.log('Game Over');
-        // document.location.reload();
-        x = canvas.width / 2;
-        y = canvas.height - 30;
-        dx = 2;
-        dy = -2;
-
-        paddleX = (canvas.width - paddleWidth) / 2;
-        paddleY = canvas.height - paddleHeight - 10;
+        cancelAnimation();
+        document.location.reload();
     }
 
     // la pelota toca la paleta
-    if( x >= paddleX && x <= paddleX + paddleWidth && y >= paddleY ){
+    if( x > paddleX && x < paddleX + 40 && y > paddleY  ){
         dy = -dy;
     }
 
@@ -195,6 +207,10 @@ function initEvents() {
     }
 }
 
+function cancelAnimation() {
+    window.cancelAnimationFrame(animationFrame);
+}
+
 
 function draw() {
     // limpiar dibujo anterior antes de uno nuevo
@@ -210,7 +226,7 @@ function draw() {
     colisionDetection();
     paddleMovement();
 
-    window.requestAnimationFrame(draw);
+    animationFrame = window.requestAnimationFrame(draw);
 }
 draw();
 initEvents();
